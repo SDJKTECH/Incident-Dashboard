@@ -54,6 +54,9 @@ Displays:
 - MTTR: mean of (`resolvedAt` − `createdAt`) over incidents that have `resolvedAt`.
 - Tasks completed vs. pending (`done` vs. `todo` + `in_progress`).
 - Incidents created in the last 7 days (rolling window from now).
+- Unassigned open incidents (count of open incidents with no assignee).
+- Incidents resolved in the last 7 days (rolling window from now).
+- Average age of open incidents (mean of now − `createdAt` over open incidents).
 
 Acceptance criteria:
 - Given incidents with mixed severities and statuses, the panel shows the correct count per severity for `open` and `investigating` incidents only.
@@ -62,7 +65,10 @@ Acceptance criteria:
 - Completed count equals tasks with status `done`; pending equals all other tasks.
 - An incident created 6 days ago is counted in "last 7 days"; one created 8 days ago is not.
 - Metrics update immediately after any create, edit, or delete.
-- Metric calculations are pure functions in `src/lib/` with unit tests.
+- Unassigned open incidents counts only `open`/`investigating` incidents whose assignee is empty or whitespace-only.
+- "Resolved in last 7 days": an incident resolved 6 days ago is counted, one resolved 8 days ago is not; incidents without `resolvedAt` are never counted.
+- "Average age of open incidents" is the mean of (now − `createdAt`) over `open`/`investigating` incidents, formatted in hours/days, and shows "N/A" (never `NaN` or 0) when there are none.
+- Metric calculations (including unassigned open, resolved in last 7 days, and average open age) are pure functions in `src/lib/` with unit tests.
 
 ### 3b. Filters & Search (AC-02)
 

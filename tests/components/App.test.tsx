@@ -71,7 +71,15 @@ describe('AC-01 / AC-03 App empty state', () => {
   it('AC-01: empty app shows MTTR N/A and zero counts', async () => {
     await renderApp()
     expect(screen.getByTestId('open-critical')).toHaveTextContent('0')
-    expect(screen.getByText('N/A')).toBeInTheDocument()
+    const cardFor = (label: string): HTMLElement => {
+      const card = screen.getByRole('heading', { name: label }).parentElement
+      if (!card) throw new Error(`No card for ${label}`)
+      return card
+    }
+    expect(within(cardFor('MTTR')).getByText('N/A')).toBeInTheDocument()
+    expect(within(cardFor('Unassigned open incidents')).getByText('0')).toBeInTheDocument()
+    expect(within(cardFor('Resolved in last 7 days')).getByText('0')).toBeInTheDocument()
+    expect(within(cardFor('Average age of open incidents')).getByText('N/A')).toBeInTheDocument()
   })
 })
 

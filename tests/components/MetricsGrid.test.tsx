@@ -115,6 +115,104 @@ describe('AC-01 MetricsGrid', () => {
   })
 })
 
+describe('AC-01.6 / AC-01.8 / AC-01.9 / AC-01.10 new metric cards', () => {
+  it('AC-01.6: Unassigned open incidents counts only open/investigating with blank assignee', () => {
+    const incidents = [
+      makeIncident({ status: 'open', assignee: '' }),
+      makeIncident({ status: 'investigating', assignee: '   ' }),
+      makeIncident({ status: 'open', assignee: 'alice' }),
+      makeIncident({ status: 'resolved', assignee: '' }),
+      makeIncident({ status: 'closed', assignee: '' }),
+    ]
+    render(<MetricsGrid incidents={incidents} tasks={[]} now={NOW} />)
+    expect(within(metric('Unassigned open incidents')).getByText('2')).toBeInTheDocument()
+  })
+
+  it('AC-01.6: Unassigned open incidents is 0 when empty', () => {
+    render(<MetricsGrid incidents={[]} tasks={[]} now={NOW} />)
+    expect(within(metric('Unassigned open incidents')).getByText('0')).toBeInTheDocument()
+  })
+
+  it('AC-01.8: Resolved in last 7 days shows 1 for a 6-day and an 8-day resolved pair', () => {
+    const incidents = [
+      makeIncident({ status: 'resolved', createdAt: ago(20 * DAY), resolvedAt: ago(6 * DAY) }),
+      makeIncident({ status: 'resolved', createdAt: ago(20 * DAY), resolvedAt: ago(8 * DAY) }),
+    ]
+    render(<MetricsGrid incidents={incidents} tasks={[]} now={NOW} />)
+    expect(within(metric('Resolved in last 7 days')).getByText('1')).toBeInTheDocument()
+  })
+
+  it('AC-01.8: Resolved in last 7 days is 0 when nothing is resolved', () => {
+    render(<MetricsGrid incidents={[makeIncident()]} tasks={[]} now={NOW} />)
+    expect(within(metric('Resolved in last 7 days')).getByText('0')).toBeInTheDocument()
+  })
+
+  it('AC-01.9: Average age of open incidents shows N/A (never NaN) with no open incidents', () => {
+    const incidents = [
+      makeIncident({ status: 'resolved', createdAt: ago(2 * DAY), resolvedAt: ago(1 * DAY) }),
+      makeIncident({ status: 'closed', createdAt: ago(3 * DAY) }),
+    ]
+    render(<MetricsGrid incidents={incidents} tasks={[]} now={NOW} />)
+    const card = metric('Average age of open incidents')
+    expect(card).toHaveTextContent('N/A')
+    expect(card).not.toHaveTextContent('NaN')
+  })
+
+  it('AC-01.9: Average age of open incidents shows N/A for empty data', () => {
+    render(<MetricsGrid incidents={[]} tasks={[]} now={NOW} />)
+    const card = metric('Average age of open incidents')
+    expect(card).toHaveTextContent('N/A')
+    expect(card).not.toHaveTextContent('NaN')
+  })
+
+  it('AC-01.9: Average age of open incidents is formatted in hours', () => {
+    const incidents = [
+      makeIncident({ status: 'open', createdAt: ago(10 * HOUR) }),
+      makeIncident({ status: 'investigating', createdAt: ago(14 * HOUR) }),
+      makeIncident({ status: 'resolved', createdAt: ago(40 * DAY), resolvedAt: ago(39 * DAY) }),
+    ]
+    render(<MetricsGrid incidents={incidents} tasks={[]} now={NOW} />)
+    const card = metric('Average age of open incidents')
+    expect(card).toHaveTextContent('12.0 h')
+    expect(card).not.toHaveTextContent('NaN')
+  })
+
+  it('AC-01.9: Average age of open incidents switches to days at 48h or more', () => {
+    render(
+      <MetricsGrid
+        incidents={[makeIncident({ status: 'open', createdAt: ago(3 * DAY) })]}
+        tasks={[]}
+        now={NOW}
+      />,
+    )
+    expect(metric('Average age of open incidents')).toHaveTextContent('3.0 d')
+  })
+
+  it('AC-01.10: rerendering with new data updates all three new cards', () => {
+    const { rerender } = render(<MetricsGrid incidents={[]} tasks={[]} now={NOW} />)
+    expect(within(metric('Unassigned open incidents')).getByText('0')).toBeInTheDocument()
+    expect(within(metric('Resolved in last 7 days')).getByText('0')).toBeInTheDocument()
+    expect(metric('Average age of open incidents')).toHaveTextContent('N/A')
+
+    rerender(
+      <MetricsGrid
+        incidents={[
+          makeIncident({ status: 'open', assignee: '', createdAt: ago(6 * HOUR) }),
+          makeIncident({ status: 'resolved', createdAt: ago(5 * DAY), resolvedAt: ago(1 * DAY) }),
+        ]}
+        tasks={[]}
+        now={NOW}
+      />,
+    )
+    expect(within(metric('Unassigned open incidents')).getByText('1')).toBeInTheDocument()
+    expect(within(metric('Resolved in last 7 days')).getByText('1')).toBeInTheDocument()
+    const age = metric('Average age of open incidents')
+    expect(age).toHaveTextContent('6.0 h')
+    expect(age).not.toHaveTextContent('N/A')
+    expect(document.body).not.toHaveTextContent('NaN')
+  })
+})
+
 describe('AC-05 MetricsGrid responsive layout', () => {
   it('AC-05: the grid stacks on mobile and reflows with sm:/lg: variants', () => {
     render(<MetricsGrid incidents={[]} tasks={[]} now={NOW} />)

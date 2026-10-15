@@ -8,6 +8,9 @@ import {
   taskCounts,
 } from '../lib/metrics';
 import { formatDuration } from '../lib/format';
+import { countUnassignedOpen } from '../lib/unassigned';
+import { resolvedInLastDays } from '../lib/resolvedRecently';
+import { meanOpenAgeMs } from '../lib/openAge';
 import { MetricCard } from './MetricCard';
 
 interface MetricsGridProps {
@@ -47,6 +50,12 @@ export function MetricsGrid({ incidents, tasks, now = currentTime() }: MetricsGr
         </p>
       </MetricCard>
       <MetricCard label="Created in last 7 days" value={createdInLastDays(incidents, now, 7)} />
+      <MetricCard label="Unassigned open incidents" value={countUnassignedOpen(incidents)} />
+      <MetricCard label="Resolved in last 7 days" value={resolvedInLastDays(incidents, now, 7)} />
+      <MetricCard
+        label="Average age of open incidents"
+        value={formatDuration(meanOpenAgeMs(incidents, now))}
+      />
     </div>
   );
 }
