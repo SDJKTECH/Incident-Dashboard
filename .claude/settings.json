@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run test:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run build:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)"
+    ],
+    "ask": [
+      "Bash(npm install:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const f=JSON.parse(d).tool_input.file_path;if(!['.ts','.tsx','.js','.jsx'].some(e=>f.endsWith(e)))return;const fs=require('fs'),p=require('path');if(!fs.existsSync(p.join('node_modules','.bin','eslint'))&&!fs.existsSync(p.join('node_modules','.bin','eslint.cmd')))return;require('child_process').spawnSync('npx',['--no-install','eslint','--fix',f],{stdio:'ignore',shell:true})}catch(e){}process.exit(0)})\""
+          }
+        ]
+      }
+    ]
+  }
+}
