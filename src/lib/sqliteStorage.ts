@@ -17,6 +17,7 @@ import {
 import { META_LEGACY_MIGRATED, getMeta, runMigrations, setMeta } from './sqliteSchema';
 import { migrateLegacy } from './migrateLegacy';
 import { loadState } from './storage';
+import { syncDbFile } from './dbFileSync';
 
 let sqlPromise: Promise<SqlJsStatic> | null = null;
 
@@ -220,7 +221,9 @@ export function createSqliteAdapter(): PersistenceAdapter {
     try {
       const target = await ensureDb();
       writeAll(target, data);
-      return await flush(target, false);
+      const ok = await flush(target, false);
+      if (ok) void syncDbFile(target.export());
+      return ok;
     } catch {
       return false;
     }
@@ -228,7 +231,15 @@ export function createSqliteAdapter(): PersistenceAdapter {
 
   /** Memoized so repeated calls (e.g. StrictMode double effects) never import twice. */
   function load(): Promise<LoadResult> {
-    if (loadPromise === null) loadPromise = loadOnce();
+    if (loadPromise === null) {
+      loadPromise = loadOnce().then((result) => {
+        // Mirror already-stored data to the dev .db file so it exists before the first edit.
+        if (db !== null && !readFailed && (result.status === 'ok' || result.status === 'empty')) {
+          void syncDbFile(db.export());
+        }
+        return result;
+      });
+    }
     return loadPromise;
   }
 

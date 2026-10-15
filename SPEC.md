@@ -104,6 +104,7 @@ Acceptance criteria:
 - Writes occur after every state change; reloading the page restores the same incidents and tasks.
 - Legacy data in LocalStorage under `incident-dashboard:v1` is migrated once into SQLite when the database is new/empty and the legacy data validates. The legacy key is kept as a backup and never deleted. Migration is idempotent; invalid legacy data is not imported.
 - The storage layer is covered by unit tests, including corrupt database, wrong shape, missing database, and legacy migration.
+- Dev-only file mirror: under `npm run dev`, the Vite dev server exposes `PUT /__db`, and the app sends the exported database bytes there after every successful save and once after load. The server writes them atomically to `data/incident-dashboard.db` (gitignored). This is a one-way, best-effort copy for inspection; IndexedDB remains the source of truth, failures are ignored, and production builds have no such endpoint.
 
 ## 4. Non-Functional Requirements (AC-05)
 
@@ -120,5 +121,5 @@ Acceptance criteria:
 ## 5. Out of Scope
 
 - Authentication / authorization
-- Backend or any network API
+- Backend or any network API (the dev-only `.db` file mirror in §3d is a development aid, not an application backend)
 - Real-time sync or multi-user collaboration
