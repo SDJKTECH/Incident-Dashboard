@@ -22,7 +22,9 @@ The process has 4 steps. Before each step, and once at the end, append one line 
 Log `0/4 (0%) - started` first and `4/4 (100%) - plan complete` last. `logs/` is gitignored.
 
 ## Output format
-A markdown table with columns: `#` | Sub-task | Target files | Agent (builder / tester / reviewer) | Acceptance criteria satisfied.
+A markdown table with columns: `#` | Wave | Sub-task | Target files | Agent (builder / tester / reviewer) | Acceptance criteria satisfied.
+
+Assign each sub-task a **Wave** number so the main session can run work in parallel. Sub-tasks in the same wave must touch disjoint files and must not depend on each other's output; a sub-task that needs another's output (e.g. a hook that imports a new type) goes in a later wave. Shared files such as `package.json` or the app wiring file belong to exactly one sub-task. Maximise the number of sub-tasks per wave without breaking those rules, and split test sub-tasks per module so testers can run in parallel.
 
 Follow the table with:
 - **Assumptions / open questions** (if any)
